@@ -1,71 +1,58 @@
-from flask import Flask
-import threading
 import os
 import requests
 import random
-import pyfiglet
-import sys
 import time
 from random import randint
 from user_agent import generate_user_agent as ua
 
-# --- FLASK SERVER FOR RENDER ---
-app = Flask('')
+def report_bot():
+    # Target username Secret se uthayega
+    target = os.environ.get('TARGET_USERNAME', '@Telegram')
+    
+    names = ["Rakesh", "Aman", "Neha", "Rahul", "Dev", "Ankit", "Karan", "Mohit"]
+    
+    print(f"--- Mass Reporting Started on {target} ---")
 
-@app.route('/')
-def home():
-    return "Bot is running 24/7!"
+    while True:
+        try:
+            email = f'{random.choice(names).lower()}{randint(1000, 9999)}@gmail.com'
+            phone = f"+91{randint(7000000000, 9999999999)}"
+            
+            msg = f"Hello Telegram Support, I want to report {target} for scamming and spreading harmful content. Please take action."
 
-def run():
-    port = int(os.environ.get("PORT", 8080))
-    app.run(host='0.0.0.0', port=port)
+            # Session create karna (Real browser feel)
+            session = requests.Session()
+            res = session.get('https://telegram.org/support', headers={"User-Agent": ua()})
+            stel = res.cookies.get('stel_ssid', '')
 
-# Background thread taaki bot aur server dono chalein
-threading.Thread(target=run).start()
+            data = {
+                'message': msg,
+                'email': email,
+                'phone': phone,
+                'setln': ''
+            }
 
-# --- BOT LOGIC ---
-E = '\033[1;31m'
-B = '\033[2;36m'
-G = '\033[1;32m'
-ab = pyfiglet.figlet_format("TELEGRAM REPORT")
-print('\033[1;32m' + ab)
+            headers = {
+                "User-Agent": ua(),
+                "Referer": "https://telegram.org/support",
+                "Origin": "https://telegram.org"
+            }
 
-def R(m, email, num):
-    try:
-        res = requests.get('https://telegram.org/support', headers={"User-Agent": ua()}).cookies
-        stel = res.get('stel_ssid', '')
-        data = f'message={m}&email={email}&phone={num}&setln='
-        
-        req = requests.post('https://telegram.org/support', data=data, headers={
-            "Host": "telegram.org",
-            "origin": "https://telegram.org",
-            "content-type": "application/x-www-form-urlencoded",
-            "user-agent": ua(),
-            "referer": "https://telegram.org/support",
-            "cookie": f"stel_ssid={stel}"
-        }).text
-        
-        if "Thanks" in req:
-            print(f'{G}[√] REPORT SUCCESS | FROM: {email}')
-        else:
-            print(f"{E}[!] Telegram limit or Error")
-    except Exception as e:
-        print(f"Connection Error: {e}")
+            response = session.post('https://telegram.org/support', data=data, headers=headers)
 
-# Render Dashboard se username uthayega
-target_user = os.environ.get("TARGET_USERNAME", "@Telegram") 
+            if "Thanks" in response.text:
+                print(f"[√] Success: Report sent from {email}")
+            else:
+                print("[!] Error: Rate limited. Waiting 30 seconds...")
+                time.sleep(30) # Block hone par lamba wait
 
-m_text = f"""Hello sir/ma'am,
-I would like to report a Telegram user who is engaging in suspicious and harmful activities. 
-Their username is {target_user}. I believe they may be involved in scams and phishing.
-Thank you."""
+            # Har report ke baad random gap (Insaan jaisa behavior)
+            time.sleep(randint(5, 15))
 
-names = ["Rakesh","Aman","Neha","Rahul","Dev","Ankit","Karan","Mohit"]
+        except Exception as e:
+            print(f"Network Error: {e}")
+            time.sleep(10)
 
-print(f"{G}Starting Mass Report on: {target_user}...")
-
-while True:
-    num = f"+91{randint(7000000000, 9999999999)}"
-    email = f'{random.choice(names).lower()}{randint(100, 9999)}@gmail.com'
-    R(m_text, email, num)
-    time.sleep(2) # 2 second ka gap taaki IP ban na ho
+if __name__ == "__main__":
+    report_bot()
+    

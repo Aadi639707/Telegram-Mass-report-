@@ -1,4 +1,5 @@
+pyTelegramBotAPI
+groq
 flask
+Pillow
 requests
-pyfiglet
-user_agent
